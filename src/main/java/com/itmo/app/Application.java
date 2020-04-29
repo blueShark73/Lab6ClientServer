@@ -1,11 +1,11 @@
 package com.itmo.app;
 
-
 import com.itmo.exceptions.InputFormatException;
 import com.itmo.exceptions.SameIdException;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * класс приложения, в котором соединены функции отправителя команды и получателя результата
@@ -25,26 +25,28 @@ public class Application {
     public Application(LinkedHashSet<StudyGroup> collection) {
         this.collection = new LinkedHashSet<>();
         idList = new HashSet<>();
-        for (StudyGroup studyGroup : collection) {
-            try {
-                //проверка валидности данных из файла
-                if (!FieldsValidator.checkNumber((long) studyGroup.getName().length(), 2, 19, "У элемента некорректное имя, id: " + studyGroup.getId(), false)
-                        || !FieldsValidator.checkNumber(studyGroup.getStudentsCount(), 0, 50, "У элемента некорректное кол-во студентов, id: " + studyGroup.getId(), true)
-                        || !FieldsValidator.checkNumber((long) studyGroup.getGroupAdmin().getName().length(), 2, 19, "У элемента некорректное имя админа, id: " + studyGroup.getId(), false)
-                        || !FieldsValidator.checkNumber(studyGroup.getGroupAdmin().getHeight(), 0, 300, "У элемента некорректный рост админа, id: " + studyGroup.getId(), true)
-                        || !FieldsValidator.checkNumber((long) studyGroup.getGroupAdmin().getPassportID().length(), 7, 24, "У элемента некорректный пасспортный id админа, id: " + studyGroup.getId(), false)
-                        || !FieldsValidator.checkNumber(studyGroup.getGroupAdmin().getWeight(), 0, 300, "У элемента некорректный вес админа, id: " + studyGroup.getId(), false)
-                        || !FieldsValidator.checkNumber(studyGroup.getId(), 0, Long.MAX_VALUE, "У элемента некорректный id, имя элемента: " + studyGroup.getName(), false)
-                        || studyGroup.getFormOfEducation() == null
-                        || !FieldsValidator.checkNumber(studyGroup.getCoordinates().getX(), Long.MIN_VALUE, Long.MAX_VALUE, "У элемента некорректная координата, id: " + studyGroup.getId(), false))
-                    throw new InputFormatException();
-                if (!idList.add(studyGroup.getId()))
-                    throw new SameIdException("В коллекции присутствуют элементы с одинаковыми id, будет загружен только один!!!");
-                this.collection.add(studyGroup);
-            } catch (InputFormatException e) {
-                System.out.println("Ошибка во входном файле, элемент с некорректными полями не будет добавлен в коллекцию!!!");
-            } catch (SameIdException e) {
-                System.out.println(e.getMessage());
+        if (collection != null) {
+            for (StudyGroup studyGroup : collection) {
+                try {
+                    //проверка валидности данных из файла
+                    if (!FieldsValidator.checkNumber((long) studyGroup.getName().length(), 2, 19, "У элемента некорректное имя, id: " + studyGroup.getId(), false)
+                            || !FieldsValidator.checkNumber(studyGroup.getStudentsCount(), 0, 50, "У элемента некорректное кол-во студентов, id: " + studyGroup.getId(), true)
+                            || !FieldsValidator.checkNumber((long) studyGroup.getGroupAdmin().getName().length(), 2, 19, "У элемента некорректное имя админа, id: " + studyGroup.getId(), false)
+                            || !FieldsValidator.checkNumber(studyGroup.getGroupAdmin().getHeight(), 0, 300, "У элемента некорректный рост админа, id: " + studyGroup.getId(), true)
+                            || !FieldsValidator.checkNumber((long) studyGroup.getGroupAdmin().getPassportID().length(), 7, 24, "У элемента некорректный пасспортный id админа, id: " + studyGroup.getId(), false)
+                            || !FieldsValidator.checkNumber(studyGroup.getGroupAdmin().getWeight(), 0, 300, "У элемента некорректный вес админа, id: " + studyGroup.getId(), false)
+                            || !FieldsValidator.checkNumber(studyGroup.getId(), 0, Long.MAX_VALUE, "У элемента некорректный id, имя элемента: " + studyGroup.getName(), false)
+                            || studyGroup.getFormOfEducation() == null
+                            || !FieldsValidator.checkNumber(studyGroup.getCoordinates().getX(), Long.MIN_VALUE, Long.MAX_VALUE, "У элемента некорректная координата, id: " + studyGroup.getId(), false))
+                        throw new InputFormatException();
+                    if (!idList.add(studyGroup.getId()))
+                        throw new SameIdException("В коллекции присутствуют элементы с одинаковыми id, будет загружен только один!!!");
+                    this.collection.add(studyGroup);
+                } catch (InputFormatException e) {
+                    System.out.println("Ошибка во входном файле, элемент с некорректными полями не будет добавлен в коллекцию!!!");
+                } catch (SameIdException e) {
+                    System.out.println(e.getMessage());
+                }
             }
         }
         setInitializationDate();
@@ -52,10 +54,8 @@ public class Application {
     }
 
     //сортируем коллекцию в алфавитном порядке, чтобы потом передавать ее отсортированную клиенту
-    public ArrayList<StudyGroup> getSortedCollection() {
-        ArrayList<StudyGroup> sortedCollection = new ArrayList<>(collection);
-        sortedCollection.sort(Comparator.comparing(StudyGroup::getName));
-        return sortedCollection;
+    public LinkedHashSet<StudyGroup> getSortedCollection() {
+        return collection.stream().sorted(Comparator.comparing(StudyGroup::getName)).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     public void setCollection(LinkedHashSet<StudyGroup> collection) {

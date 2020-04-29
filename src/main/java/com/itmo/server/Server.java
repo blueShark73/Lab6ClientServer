@@ -1,6 +1,7 @@
 package com.itmo.server;
 
 import com.itmo.app.Application;
+import com.itmo.app.SerializationManager;
 import com.itmo.commands.Command;
 
 import java.io.*;
@@ -18,10 +19,13 @@ public class Server {
     private DatagramChannel channel;
     private SocketAddress address;
     private byte[] buffer;
+    private SerializationManager<Command> commandSerializationManager = new SerializationManager<>();
+    private SerializationManager<Response> responseSerializationManager = new SerializationManager<>();
     public static final Logger log = LogManager.getLogger();
+    private static final int DEFAULT_BUFFER_SIZE = 65536;
 
-    public Server(int sizeOfBuffer) {
-        buffer = new byte[sizeOfBuffer];
+    public Server() {
+        buffer = new byte[DEFAULT_BUFFER_SIZE];
     }
 
     //модуль приёма соединений
@@ -40,27 +44,24 @@ public class Server {
                 do {
                     address = channel.receive(byteBuffer);
                 } while (address == null);
-                ByteArrayInputStream byteStream = new ByteArrayInputStream(buffer);
-                ObjectInputStream obs = new ObjectInputStream(byteStream);
-                Command command = (Command) obs.readObject();
+                Command command = commandSerializationManager.readObject(buffer);
                 System.out.println("Сервер получил команду " + command);
                 String result = processCommand(application, command);
-                log.info("Server receive command "+command.toString());
+                log.info("Server receive command " + command.toString());
                 System.out.println("Команда " + command + " выполнена, посылаю ответ клиенту...");
-                log.info("Command "+command.toString()+" is completed, send an answer to the client");
+                log.info("Command " + command.toString() + " is completed, send an answer to the client");
                 Response response = new Response(result);
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-                objectOutputStream.writeObject(response);
-                byte[] b = outputStream.toByteArray();
-                byteBuffer = ByteBuffer.wrap(b);
+                byte[] answer = responseSerializationManager.writeObject(response);
+                byteBuffer = ByteBuffer.wrap(answer);
                 channel.send(byteBuffer, address);
             }
         } catch (ClassNotFoundException e) {
-            System.err.println("Сервер ожидает команду, а клиент отправляет нечто неизвестное...");
+            System.out.println("Сервер ожидает команду, а клиент отправляет нечто неизвестное...");
         } catch (IOException e) {
             System.out.println("Проблемы с подключением...");
             e.printStackTrace();
+        } catch (ClassCastException e) {
+            System.out.println("Сервер ожидал команду, а получил что-то не то...");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -68,9 +69,9 @@ public class Server {
 
     //исполнение команды
     public String processCommand(Application application, Command command) {
-        if(command instanceof ExitCommand) {
+        if (command instanceof ExitCommand) {
             new SaveCommand().execute(application);
-            log.info("Server receive command "+new SaveCommand().toString());
+            log.info("Server receive command " + new SaveCommand().toString());
         }
         String result = command.execute(application);
         application.getCommandHistory().add(command);

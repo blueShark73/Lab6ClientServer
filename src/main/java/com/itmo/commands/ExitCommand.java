@@ -5,7 +5,6 @@ import com.itmo.app.StudyGroup;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.Scanner;
 
 /**
  * команда закрытия приложения

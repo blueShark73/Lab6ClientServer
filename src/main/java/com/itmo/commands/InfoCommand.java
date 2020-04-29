@@ -21,7 +21,6 @@ public class InfoCommand extends Command {
         result.append("Кол-во элементов: ").append(getCollection().size()).append("\n");
         if (!getCollection().isEmpty()) {
             result.append("Тип данных, хранимых в коллекции: ").append(getCollection().iterator().next().getClass()).append("\n");
-            result.append("Первый добавленный в коллекцию элемент: ").append(getCollection().toArray()[0]).append("\n");
         }
         return result.deleteCharAt(result.length()-1).toString();
     }

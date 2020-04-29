@@ -3,7 +3,6 @@ package com.itmo.app;
 import javax.xml.bind.annotation.XmlEnum;
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.Optional;
 
 /**
  * текущий семестр для учебной группы
